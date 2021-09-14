@@ -3,11 +3,11 @@
 > java-version: 16  
 > shell: powershell
 
-- test performance of Optional vs If statement
-- test performance of Stream vs foreach
-- check log messages of JIT compiler and GC 
+- test performance of `Optional` vs `if` statement
+- test performance of `Stream` vs `foreach`
+- check log messages of **JIT compiler** and **GC**
 
-All tests executed in a Docker container to restrict some resources
+All tests executed in a **Docker** container to restrict some resources
 
 Build a distribution:
 ```
@@ -15,20 +15,20 @@ gradle distZip
 docker build -t jmh .
 ```
 
-
+Run microbenchmark:
 ```powershell
-docker run --rm jmh 1️⃣
+docker run --rm jmh 1️⃣  
 
-docker run --rm ` 2️
+docker run --rm ` 2️ 
   -e "JAVA_OPTS=-XX:+PrintCompilation" `
   jmh
   
-docker run --rm ` 3️
+docker run --rm ` 3️ 
   -v "$PWD/log:/jmh/log" `
   -e "JAVA_OPTS=-Xlog:gc*:file=log/gc.log:time,uptime,level,tags:filecount=1,filesize=100m" `
   jmh
   
-docker run --rm ` 4️
+docker run --rm ` 4️ 
   -v "$PWD/log:/jmh/log" `
   -e "JAVA_OPTS=-XX:+FlightRecorder -XX:StartFlightRecording=duration=2m,filename=log/flightIf.jfr" `
   jmh
@@ -37,12 +37,12 @@ docker run --rm `
   -e "JAVA_OPTS=-XX:+FlightRecorder -XX:StartFlightRecording=duration=2m,filename=log/flightOpt.jfr" `
   jmh
   
-docker run --rm --cpus="1" ` 5️
+docker run --rm --cpus="1" ` 5️ 
   -v "$PWD/log:/jmh/log" `
   -e "JAVA_OPTS=-Xlog:gc*:file=log/gc.log:time,uptime,level,tags:filecount=1,filesize=100m" `
   jmh
   
-docker run --rm jmh 6️
+docker run --rm jmh 6️ 
 docker run --rm -m=1g --cpus="1" jmh        
 ```
 
