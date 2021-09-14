@@ -1,4 +1,4 @@
-# JMH 101
+# JMH (Java Microbenchmark Harness) 101
 > gradle-version: 7.2  
 > java-version: 16  
 > shell: powershell
