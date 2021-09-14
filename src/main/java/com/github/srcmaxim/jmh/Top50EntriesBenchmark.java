@@ -1,21 +1,12 @@
-package lviv.javaclub.benchmark;
+package com.github.srcmaxim.jmh;
 
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.RandomUtils;
-import org.openjdk.jmh.annotations.Benchmark;
-import org.openjdk.jmh.annotations.Fork;
-import org.openjdk.jmh.annotations.Measurement;
-import org.openjdk.jmh.annotations.Scope;
-import org.openjdk.jmh.annotations.Setup;
-import org.openjdk.jmh.annotations.State;
-import org.openjdk.jmh.annotations.Warmup;
+import org.openjdk.jmh.annotations.*;
 import org.openjdk.jmh.infra.Blackhole;
 
 import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Fork(warmups = 1, value = 1)
@@ -24,9 +15,6 @@ import java.util.stream.Collectors;
 public class Top50EntriesBenchmark {
 
     private static final int PRODUCTS_COUNT = 500;
-
-
-
 
     @State(Scope.Benchmark)
     public static class TestData {
@@ -68,27 +56,32 @@ public class Top50EntriesBenchmark {
 
     @Benchmark
     public void topPricesStream(TestData testData, Blackhole bh) {
-        final List<Product> top10 = testData.products.stream()
+        final List<Product> top50 = testData.products.stream()
                 .takeWhile(Product::isActive)
                 .sorted(Comparator.comparing(Product::getPrice).reversed())
-                .limit(10)
+                .limit(50)
                 .collect(Collectors.toList());
-        bh.consume(top10);
+        bh.consume(top50);
     }
 
     @Benchmark
     public void topPricesIterable(TestData testData, Blackhole bh) {
-        List<Product> active = new ArrayList<>(testData.products.size());
+        var byPriceAsc = Comparator.comparing(Product::getPrice);
+        var maxElements = 50 + 1;
+        var top50 = new PriorityQueue<>(maxElements, byPriceAsc);
+        BigDecimal minTopPrice = BigDecimal.ZERO;
         for (Product product : testData.products) {
             if (product.isActive()) {
-                active.add(product);
-            } else {
-                break;
+                if (product.getPrice().compareTo(minTopPrice) > 0
+                        && top50.offer(product)
+                        && top50.size() == maxElements) {
+                    BigDecimal minPrice;
+                    if (!minTopPrice.equals(minPrice = top50.poll().getPrice()))
+                        minTopPrice = minPrice;
+                }
             }
         }
-        active.sort(Comparator.comparing(Product::getPrice).reversed());
-        List<Product> top10 = active.subList(0, Math.min(10, active.size()));
-        bh.consume(top10);
+        bh.consume(top50);
     }
 
     private static class Product {

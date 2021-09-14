@@ -1,4 +1,4 @@
-package lviv.javaclub.benchmark;
+package com.github.srcmaxim.jmh;
 
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.RandomUtils;

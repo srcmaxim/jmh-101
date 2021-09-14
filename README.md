@@ -1,48 +1,54 @@
-### During this workshop we were trying to:
-- test perforamce of some Optional vs IF statement
+# JMH 101
+> gradle-version: 7.2  
+> java-version: 16  
+> shell: powershell
+
+- test performance of Optional vs If statement
 - test performance of Stream vs foreach
+- check log messages of JIT compiler and GC 
 
-But the main goal was to check log messages of JIT compiler and GC 
+All tests executed in a Docker container to restrict some resources
 
-If you want to try it by yourself, you need to build a shadow jar:
+Build a distribution:
 ```
-gradle clean build shadowJar
-```
-
-All tests we do in docker container, that allows us to restrict some resources and check
-what impact does it have on JVM and test results
-
-#### First invocation Optional vs If statement (no limits for memory and cpu)
-```
-docker run --rm -v "$PWD":/app/jmh -w /app/jmh openjdk:11 java -jar /app/jmh/build/libs/microbenchmark-1.0-SNAPSHOT-all.jar
-```
-JIT logs
-```
-docker run --rm -v "$PWD":/app/jmh -w /app/jmh openjdk:11 java -XX:+PrintCompilation -jar /app/jmh/build/libs/microbenchmark-1.0-SNAPSHOT-all.jar
+gradle distZip
+docker build -t jmh .
 ```
 
-#### What GC is used and its stats (measurements = 1)
-```
-docker run --rm -v "$PWD":/app/jmh -w /app/jmh openjdk:11 java -Xlog:gc*:file=gc.log:time,uptime,level,tags:filecount=1,filesize=100m -jar /app/jmh/build/libs/microbenchmark-1.0-SNAPSHOT-all.jar
+
+```powershell
+docker run --rm jmh 1️⃣
+
+docker run --rm ` 2️
+  -e "JAVA_OPTS=-XX:+PrintCompilation" `
+  jmh
+  
+docker run --rm ` 3️
+  -v "$PWD/log:/jmh/log" `
+  -e "JAVA_OPTS=-Xlog:gc*:file=log/gc.log:time,uptime,level,tags:filecount=1,filesize=100m" `
+  jmh
+  
+docker run --rm ` 4️
+  -v "$PWD/log:/jmh/log" `
+  -e "JAVA_OPTS=-XX:+FlightRecorder -XX:StartFlightRecording=duration=2m,filename=log/flightIf.jfr" `
+  jmh
+docker run --rm `
+  -v "$PWD/log:/jmh/log" `
+  -e "JAVA_OPTS=-XX:+FlightRecorder -XX:StartFlightRecording=duration=2m,filename=log/flightOpt.jfr" `
+  jmh
+  
+docker run --rm --cpus="1" ` 5️
+  -v "$PWD/log:/jmh/log" `
+  -e "JAVA_OPTS=-Xlog:gc*:file=log/gc.log:time,uptime,level,tags:filecount=1,filesize=100m" `
+  jmh
+  
+docker run --rm jmh 6️
+docker run --rm -m=1g --cpus="1" jmh        
 ```
 
-#### Collect GC time for IF and Optional:
-```
-docker run --rm -v "$PWD":/app/jmh -w /app/jmh openjdk:11 java -XX:+FlightRecorder -XX:StartFlightRecording=duration=2m,filename=flightIf.jfr -jar /app/jmh/build/libs/microbenchmark-1.0-SNAPSHOT-all.jar
-docker run --rm -v "$PWD":/app/jmh -w /app/jmh openjdk:11 java -XX:+FlightRecorder -XX:StartFlightRecording=duration=2m,filename=flightOpt.jfr -jar /app/jmh/build/libs/microbenchmark-1.0-SNAPSHOT-all.jar
-```
-
-#### Limit cpu to 1 with GC logs
-```
-docker run --rm --cpus="1" -v "$PWD":/app/jmh -w /app/jmh openjdk:11 java -Xlog:gc*:file=gc.log:time,uptime,level,tags:filecount=1,filesize=100m -jar /app/jmh/build/libs/microbenchmark-1.0-SNAPSHOT-all.jar
-```
-
-#### Sum of prices: stream vs iterable
-```
-docker run --rm -v "$PWD":/app/jmh -w /app/jmh openjdk:11 java -jar /app/jmh/build/libs/microbenchmark-1.0-SNAPSHOT-all.jar
-```
-
-####  Sum of prices: 1 cpu
-```
-docker run --rm -m=1g --cpus="1" -v "$PWD":/app/jmh -w /app/jmh openjdk:11 java -jar /app/jmh/build/libs/microbenchmark-1.0-SNAPSHOT-all.jar
-```
+1️⃣ Basic JMH run (more op/sec -- better)  
+2️Print JIT compiled methods  
+3️Print GC log  
+4️Print JVM Flight Recorder stats `log/flight*.jfr` to use in JDK Mission Control  
+5️Print GC log for 1 CPU workload  
+6️Compare unbounded to bounded app 
