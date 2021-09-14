@@ -17,18 +17,18 @@ docker build -t jmh .
 
 Run microbenchmark:
 ```powershell
-docker run --rm jmh 1️⃣  
+docker run --rm jmh [1]  
 
-docker run --rm ` 2️ 
+docker run --rm ` [2️] 
   -e "JAVA_OPTS=-XX:+PrintCompilation" `
   jmh
   
-docker run --rm ` 3️ 
+docker run --rm ` [3️]
   -v "$PWD/log:/jmh/log" `
   -e "JAVA_OPTS=-Xlog:gc*:file=log/gc.log:time,uptime,level,tags:filecount=1,filesize=100m" `
   jmh
   
-docker run --rm ` 4️ 
+docker run --rm ` [4️] 
   -v "$PWD/log:/jmh/log" `
   -e "JAVA_OPTS=-XX:+FlightRecorder -XX:StartFlightRecording=duration=2m,filename=log/flightIf.jfr" `
   jmh
@@ -37,18 +37,18 @@ docker run --rm `
   -e "JAVA_OPTS=-XX:+FlightRecorder -XX:StartFlightRecording=duration=2m,filename=log/flightOpt.jfr" `
   jmh
   
-docker run --rm --cpus="1" ` 5️ 
+docker run --rm --cpus="1" ` [5️] 
   -v "$PWD/log:/jmh/log" `
   -e "JAVA_OPTS=-Xlog:gc*:file=log/gc.log:time,uptime,level,tags:filecount=1,filesize=100m" `
   jmh
   
-docker run --rm jmh 6️ 
+docker run --rm jmh [6️] 
 docker run --rm -m=1g --cpus="1" jmh        
 ```
 
-1️⃣ Basic JMH run (more op/sec -- better)  
-2️Print JIT compiled methods  
-3️Print GC log  
-4️Print JVM Flight Recorder stats `log/flight*.jfr` to use in JDK Mission Control  
-5️Print GC log for 1 CPU workload  
-6️Compare unbounded to bounded app 
+[1️] Basic JMH run (more op/sec -- better)  
+[2️] Print JIT compiled methods  
+[3️] Print GC log  
+[4️] Print JVM Flight Recorder stats `log/flight*.jfr` to use in JDK Mission Control  
+[5️] Print GC log for 1 CPU workload  
+[6️] Compare unbounded to bounded app 
